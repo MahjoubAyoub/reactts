@@ -4,7 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { LayoutDashboard, ImageIcon, FolderOpen, Users, Settings } from "lucide-react"
+import { LayoutDashboard, ImageIcon, FolderOpen, Users, Settings, Shield } from "lucide-react"
+import { useSession } from "next-auth/react"
 
 const navItems = [
   {
@@ -34,18 +35,36 @@ const navItems = [
   },
 ]
 
+const adminNavItem = {
+  title: "Admin",
+  href: "/dashboard/admin",
+  icon: Shield,
+}
+
 export function DashboardNav() {
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const isAdmin = session?.user?.role === 'admin'
+
+  const items = isAdmin ? [...navItems, adminNavItem] : navItems
 
   return (
-    <nav className="grid items-start gap-2 p-4 text-sm font-medium">
-      {navItems.map((item) => (
-        <Link key={item.href} href={item.href}>
-          <Button variant="ghost" className={cn("w-full justify-start gap-2", pathname === item.href && "bg-muted")}>
+    <nav className="grid items-start gap-2 p-4">
+      {items.map((item, index) => (
+        <Button
+          key={index}
+          variant={pathname === item.href ? "secondary" : "ghost"}
+          className={cn(
+            "w-full justify-start gap-2",
+            pathname === item.href && "bg-muted font-medium hover:bg-muted"
+          )}
+          asChild
+        >
+          <Link href={item.href}>
             <item.icon className="h-4 w-4" />
             {item.title}
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       ))}
     </nav>
   )

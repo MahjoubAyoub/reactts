@@ -145,7 +145,6 @@ export default function SettingsPage() {
                   <li>High-quality exports</li>
                   <li>Collaboration features</li>
                 </ul>
-                <Button className="w-full">Upgrade to Pro</Button>
               </div>
 
               <div className="rounded-lg border p-4">

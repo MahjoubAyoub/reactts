@@ -1,4 +1,8 @@
+"use client"
+
 import type React from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { DashboardNav } from "@/components/dashboard-nav"
 import { UserNav } from "@/components/user-nav"
 import { Logo } from "@/components/logo"
@@ -8,6 +12,18 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  if (status === "loading") {
+    return <div>Loading...</div>
+  }
+
+  if (!session) {
+    router.push("/login")
+    return null
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b bg-background">

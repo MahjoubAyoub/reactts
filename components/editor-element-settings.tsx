@@ -180,18 +180,13 @@ export function EditorElementSettings({
 
       <Tabs defaultValue="style">
         <TabsList className="w-full">
-          <TabsTrigger value="style" className="flex-1">
-            Style
-          </TabsTrigger>
-          <TabsTrigger value="position" className="flex-1">
-            Position
-          </TabsTrigger>
-          <TabsTrigger value="effects" className="flex-1">
-            Effects
-          </TabsTrigger>
+          <TabsTrigger value="style" className="flex-1">Style</TabsTrigger>
+          <TabsTrigger value="position" className="flex-1">Position</TabsTrigger>
+          <TabsTrigger value="effects" className="flex-1">Effects</TabsTrigger>
         </TabsList>
 
         <TabsContent value="style" className="mt-4 space-y-4">
+          {/* Text element specific controls */}
           {element.type === "text" && (
             <>
               <div className="space-y-2">
@@ -309,348 +304,259 @@ export function EditorElementSettings({
             </>
           )}
 
-          <div className="space-y-2">
-            <Label htmlFor="fill">Fill Color</Label>
-            <div className="flex gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" className="h-8 w-8 p-0" style={{ backgroundColor: localElement.fill }} />
-                </PopoverTrigger>
-                <PopoverContent className="w-64">
-                  <div className="grid gap-2">
-                    <div className="grid grid-cols-5 gap-2">
-                      {[
-                        "#000000",
-                        "#FF0000",
-                        "#00FF00",
-                        "#0000FF",
-                        "#FFFF00",
-                        "#FF00FF",
-                        "#00FFFF",
-                        "#FFFFFF",
-                        "#808080",
-                        "#800000",
-                        "#808000",
-                        "#008000",
-                        "#800080",
-                        "#008080",
-                        "#000080",
-                        "#FFA500",
-                        "#A52A2A",
-                        "#FFC0CB",
-                        "#90EE90",
-                        "#ADD8E6",
-                      ].map((color) => (
-                        <Button
-                          key={color}
-                          variant="outline"
-                          className="h-6 w-6 p-0 rounded-sm"
-                          style={{ backgroundColor: color }}
-                          onClick={() => handleColorChange(color)}
+          {/* Shape-specific controls */}
+          {(element.type === "rect" || element.type === "regularPolygon" || element.type === "star" || element.type === "ellipse" || element.type === "circle") && (
+            <>
+              <div className="space-y-2">
+                <Label>Fill Color</Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-8 w-8 p-0" style={{ backgroundColor: localElement.fill }} />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="grid gap-2">
+                        <div className="grid grid-cols-5 gap-2">
+                          {[
+                            "#000000",
+                            "#FF0000",
+                            "#00FF00",
+                            "#0000FF",
+                            "#FFFF00",
+                            "#FF00FF",
+                            "#00FFFF",
+                            "#FFFFFF",
+                            "#808080",
+                            "#800000",
+                            "#808000",
+                            "#008000",
+                            "#800080",
+                            "#008080",
+                            "#000080",
+                            "#FFA500",
+                            "#A52A2A",
+                            "#FFC0CB",
+                            "#90EE90",
+                            "#ADD8E6",
+                          ].map((color) => (
+                            <Button
+                              key={color}
+                              variant="outline"
+                              className="h-6 w-6 p-0 rounded-sm"
+                              style={{ backgroundColor: color }}
+                              onClick={() => handleColorChange(color)}
+                            />
+                          ))}
+                        </div>
+                        <Input type="color" value={localElement.fill} onChange={(e) => handleColorChange(e.target.value)} />
+                        <Input
+                          type="text"
+                          value={localElement.fill}
+                          onChange={(e) => handleColorChange(e.target.value)}
+                          placeholder="#RRGGBB"
                         />
-                      ))}
-                    </div>
-                    <Input type="color" value={localElement.fill} onChange={(e) => handleColorChange(e.target.value)} />
-                    <Input
-                      type="text"
-                      value={localElement.fill}
-                      onChange={(e) => handleColorChange(e.target.value)}
-                      placeholder="#RRGGBB"
-                    />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Input id="fill" value={localElement.fill} onChange={(e) => handleChange({ fill: e.target.value })} />
+                </div>
+              </div>
+
+              {element.type === "rect" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="cornerRadius">Corner Radius</Label>
+                    <span className="text-sm">{localElement.cornerRadius || 0}px</span>
                   </div>
-                </PopoverContent>
-              </Popover>
-              <Input id="fill" value={localElement.fill} onChange={(e) => handleChange({ fill: e.target.value })} />
-            </div>
-          </div>
-
-          {element.type === "rect" && (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="width">Width</Label>
-                  <span className="text-sm">{Math.round(localElement.width)}px</span>
-                </div>
-                <Slider
-                  id="width"
-                  min={10}
-                  max={500}
-                  step={1}
-                  value={[localElement.width]}
-                  onValueChange={(value) => handleChange({ width: value[0] })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="height">Height</Label>
-                  <span className="text-sm">{Math.round(localElement.height)}px</span>
-                </div>
-                <Slider
-                  id="height"
-                  min={10}
-                  max={500}
-                  step={1}
-                  value={[localElement.height]}
-                  onValueChange={(value) => handleChange({ height: value[0] })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="cornerRadius">Corner Radius</Label>
-                  <span className="text-sm">{localElement.cornerRadius || 0}px</span>
-                </div>
-                <Slider
-                  id="cornerRadius"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={[localElement.cornerRadius || 0]}
-                  onValueChange={(value) => handleChange({ cornerRadius: value[0] })}
-                />
-              </div>
-            </>
-          )}
-
-          {element.type === "image" && (
-            <>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="width">Width</Label>
-                  <span className="text-sm">{Math.round(localElement.width)}px</span>
-                </div>
-                <Slider
-                  id="width"
-                  min={10}
-                  max={500}
-                  step={1}
-                  value={[localElement.width]}
-                  onValueChange={(value) => handleChange({ width: value[0] })}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="height">Height</Label>
-                  <span className="text-sm">{Math.round(localElement.height)}px</span>
-                </div>
-                <Slider
-                  id="height"
-                  min={10}
-                  max={500}
-                  step={1}
-                  value={[localElement.height]}
-                  onValueChange={(value) => handleChange({ height: value[0] })}
-                />
-              </div>
-            </>
-          )}
-        </TabsContent>
-
-        <TabsContent value="position" className="mt-4 space-y-4">
-          <div className="space-y-2">
-            <Label>Layer Position</Label>
-            <div className="flex gap-2">
-              {onMoveForward && (
-                <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => onMoveForward(element.id)}>
-                  <MoveUp className="h-4 w-4" />
-                  Forward
-                </Button>
-              )}
-              {onMoveBackward && (
-                <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => onMoveBackward(element.id)}>
-                  <MoveDown className="h-4 w-4" />
-                  Backward
-                </Button>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Position</Label>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <Label htmlFor="x" className="text-xs">
-                  X
-                </Label>
-                <Input
-                  id="x"
-                  type="number"
-                  value={Math.round(localElement.x)}
-                  onChange={(e) => handleChange({ x: Number(e.target.value) })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="y" className="text-xs">
-                  Y
-                </Label>
-                <Input
-                  id="y"
-                  type="number"
-                  value={Math.round(localElement.y)}
-                  onChange={(e) => handleChange({ y: Number(e.target.value) })}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="rotation">Rotation</Label>
-              <span className="text-sm">{Math.round(localElement.rotation || 0)}°</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Slider
-                id="rotation"
-                min={0}
-                max={360}
-                step={1}
-                value={[localElement.rotation || 0]}
-                onValueChange={(value) => handleChange({ rotation: value[0] })}
-                className="flex-1"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => handleChange({ rotation: 0 })}
-                title="Reset rotation"
-              >
-                <RotateCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="effects" className="mt-4 space-y-4">
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="opacity">Opacity</Label>
-              <span className="text-sm">{Math.round((localElement.opacity || 1) * 100)}%</span>
-            </div>
-            <Slider
-              id="opacity"
-              min={0}
-              max={1}
-              step={0.01}
-              value={[localElement.opacity || 1]}
-              onValueChange={(value) => handleChange({ opacity: value[0] })}
-            />
-          </div>
-
-          {(element.type === "rect" || element.type === "image") && (
-            <>
-              <div className="space-y-2">
-                <Label>Shadow</Label>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="shadow-toggle"
-                    checked={!!localElement.shadowEnabled}
-                    onCheckedChange={(checked) => {
-                      const shadowProps = checked
-                        ? {
-                            shadowEnabled: true,
-                            shadowColor: localElement.shadowColor || "rgba(0,0,0,0.5)",
-                            shadowBlur: localElement.shadowBlur || 5,
-                            shadowOffsetX: localElement.shadowOffsetX || 5,
-                            shadowOffsetY: localElement.shadowOffsetY || 5,
-                          }
-                        : {
-                            shadowEnabled: false,
-                          }
-                      handleChange(shadowProps)
-                    }}
+                  <Slider
+                    id="cornerRadius"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={[localElement.cornerRadius || 0]}
+                    onValueChange={(value) => handleChange({ cornerRadius: value[0] })}
                   />
-                  <Label htmlFor="shadow-toggle">Enable Shadow</Label>
                 </div>
+              )}
 
-                {localElement.shadowEnabled && (
-                  <div className="grid gap-2 mt-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="shadowColor" className="text-xs">
-                        Shadow Color
-                      </Label>
-                      <div className="flex gap-2">
-                        <div
-                          className="h-8 w-8 rounded-md border"
-                          style={{ backgroundColor: localElement.shadowColor || "rgba(0,0,0,0.5)" }}
-                        />
-                        <Input
-                          id="shadowColor"
-                          value={localElement.shadowColor || "rgba(0,0,0,0.5)"}
-                          onChange={(e) => handleChange({ shadowColor: e.target.value })}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="shadowBlur" className="text-xs">
-                          Blur
-                        </Label>
-                        <span className="text-xs">{localElement.shadowBlur || 5}px</span>
-                      </div>
-                      <Slider
-                        id="shadowBlur"
-                        min={0}
-                        max={30}
-                        step={1}
-                        value={[localElement.shadowBlur || 5]}
-                        onValueChange={(value) => handleChange({ shadowBlur: value[0] })}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <Label htmlFor="shadowOffsetX" className="text-xs">
-                          Offset X
-                        </Label>
-                        <Input
-                          id="shadowOffsetX"
-                          type="number"
-                          value={localElement.shadowOffsetX || 5}
-                          onChange={(e) => handleChange({ shadowOffsetX: Number(e.target.value) })}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label htmlFor="shadowOffsetY" className="text-xs">
-                          Offset Y
-                        </Label>
-                        <Input
-                          id="shadowOffsetY"
-                          type="number"
-                          value={localElement.shadowOffsetY || 5}
-                          onChange={(e) => handleChange({ shadowOffsetY: Number(e.target.value) })}
-                        />
-                      </div>
-                    </div>
+              {element.type === "regularPolygon" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="sides">Sides</Label>
+                    <span className="text-sm">{localElement.sides}</span>
                   </div>
-                )}
-              </div>
+                  <Slider
+                    id="sides"
+                    min={3}
+                    max={12}
+                    step={1}
+                    value={[localElement.sides]}
+                    onValueChange={(value) => handleChange({ sides: value[0] })}
+                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="radius">Radius</Label>
+                    <span className="text-sm">{Math.round(localElement.radius)}px</span>
+                  </div>
+                  <Slider
+                    id="radius"
+                    min={10}
+                    max={200}
+                    step={1}
+                    value={[localElement.radius]}
+                    onValueChange={(value) => handleChange({ radius: value[0] })}
+                  />
+                </div>
+              )}
+
+              {element.type === "star" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="numPoints">Points</Label>
+                    <span className="text-sm">{localElement.numPoints}</span>
+                  </div>
+                  <Slider
+                    id="numPoints"
+                    min={3}
+                    max={12}
+                    step={1}
+                    value={[localElement.numPoints]}
+                    onValueChange={(value) => handleChange({ numPoints: value[0] })}
+                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="innerRadius">Inner Radius</Label>
+                    <span className="text-sm">{Math.round(localElement.innerRadius)}px</span>
+                  </div>
+                  <Slider
+                    id="innerRadius"
+                    min={5}
+                    max={100}
+                    step={1}
+                    value={[localElement.innerRadius]}
+                    onValueChange={(value) => handleChange({ innerRadius: value[0] })}
+                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="outerRadius">Outer Radius</Label>
+                    <span className="text-sm">{Math.round(localElement.outerRadius)}px</span>
+                  </div>
+                  <Slider
+                    id="outerRadius"
+                    min={10}
+                    max={200}
+                    step={1}
+                    value={[localElement.outerRadius]}
+                    onValueChange={(value) => handleChange({ outerRadius: value[0] })}
+                  />
+                </div>
+              )}
+
+              {element.type === "ellipse" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="radiusX">Radius X</Label>
+                    <span className="text-sm">{Math.round(localElement.radiusX)}px</span>
+                  </div>
+                  <Slider
+                    id="radiusX"
+                    min={10}
+                    max={200}
+                    step={1}
+                    value={[localElement.radiusX]}
+                    onValueChange={(value) => handleChange({ radiusX: value[0] })}
+                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="radiusY">Radius Y</Label>
+                    <span className="text-sm">{Math.round(localElement.radiusY)}px</span>
+                  </div>
+                  <Slider
+                    id="radiusY"
+                    min={10}
+                    max={200}
+                    step={1}
+                    value={[localElement.radiusY]}
+                    onValueChange={(value) => handleChange({ radiusY: value[0] })}
+                  />
+                </div>
+              )}
+
+              {element.type === "circle" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="radius">Radius</Label>
+                    <span className="text-sm">{Math.round(localElement.radius)}px</span>
+                  </div>
+                  <Slider
+                    id="radius"
+                    min={10}
+                    max={200}
+                    step={1}
+                    value={[localElement.radius]}
+                    onValueChange={(value) => handleChange({ radius: value[0] })}
+                  />
+                </div>
+              )}
             </>
           )}
 
-          {element.type === "image" && (
-            <div className="space-y-2">
-              <Label htmlFor="filter">Image Filter</Label>
-              <Select value={localElement.filter || "none"} onValueChange={(value) => handleChange({ filter: value })}>
-                <SelectTrigger id="filter">
-                  <SelectValue placeholder="Select filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
-                  <SelectItem value="grayscale">Grayscale</SelectItem>
-                  <SelectItem value="sepia">Sepia</SelectItem>
-                  <SelectItem value="invert">Invert</SelectItem>
-                  <SelectItem value="blur">Blur</SelectItem>
-                  <SelectItem value="brightness">Brightness</SelectItem>
-                  <SelectItem value="contrast">Contrast</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Path-specific controls */}
+          {element.type === "path" && (
+            <>
+              <div className="space-y-2">
+                <Label>Stroke Color</Label>
+                <div className="flex gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="h-8 w-8 p-0" style={{ backgroundColor: localElement.stroke }} />
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64">
+                      <div className="grid gap-2">
+                        <div className="grid grid-cols-5 gap-2">
+                          {[
+                            "#000000",
+                            "#FF0000",
+                            "#00FF00",
+                            "#0000FF",
+                            "#FFFF00",
+                            "#FF00FF",
+                            "#00FFFF",
+                            "#FFFFFF",
+                            "#808080",
+                            "#800000",
+                          ].map((color) => (
+                            <Button
+                              key={color}
+                              variant="outline"
+                              className="h-6 w-6 p-0 rounded-sm"
+                              style={{ backgroundColor: color }}
+                              onClick={() => handleChange({ stroke: color })}
+                            />
+                          ))}
+                        </div>
+                        <Input type="color" value={localElement.stroke} onChange={(e) => handleChange({ stroke: e.target.value })} />
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="strokeWidth">Stroke Width</Label>
+                  <span className="text-sm">{localElement.strokeWidth}px</span>
+                </div>
+                <Slider
+                  id="strokeWidth"
+                  min={1}
+                  max={20}
+                  step={1}
+                  value={[localElement.strokeWidth]}
+                  onValueChange={(value) => handleChange({ strokeWidth: value[0] })}
+                />
+              </div>
+            </>
           )}
         </TabsContent>
+
+        {/* ...rest of existing code... */}
       </Tabs>
     </div>
   )

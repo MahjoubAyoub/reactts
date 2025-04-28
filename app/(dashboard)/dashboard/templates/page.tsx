@@ -1,117 +1,96 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, Star, StarOff } from "lucide-react"
+import { fetchWithAuth } from "@/lib/api-middleware"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
+interface Template {
+  id: string
+  name: string
+  category: string
+  dimensions: {
+    width: number
+    height: number
+  }
+}
+
 export default function TemplatesPage() {
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeCategory, setActiveCategory] = useState("all")
+
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const response = await fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/templates`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch templates')
+        }
+        const data = await response.json()
+        setTemplates(data)
+      } catch (err) {
+        setError("Failed to fetch templates.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTemplates()
+  }, [])
+
+  const filteredTemplates = activeCategory === "all" 
+    ? templates 
+    : templates.filter(template => template.category === activeCategory)
+
+  if (loading) return (
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-gray-900"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="text-center text-red-500">
+      <p>{error}</p>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Templates</h1>
       </div>
 
-      <Tabs defaultValue="all">
+      <Tabs defaultValue="all" onValueChange={setActiveCategory}>
         <TabsList>
           <TabsTrigger value="all">All Templates</TabsTrigger>
-          <TabsTrigger value="social">Social Media</TabsTrigger>
-          <TabsTrigger value="print">Print</TabsTrigger>
-          <TabsTrigger value="presentation">Presentation</TabsTrigger>
+          <TabsTrigger value="Social Media">Social Media</TabsTrigger>
+          <TabsTrigger value="Print">Print</TabsTrigger>
+          <TabsTrigger value="Presentation">Presentation</TabsTrigger>
+          <TabsTrigger value="Resume">Resume</TabsTrigger>
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
         </TabsList>
 
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between mt-4">
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input type="search" placeholder="Search templates..." className="w-full sm:w-[300px] pl-8" />
-          </div>
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Select defaultValue="popular">
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="popular">Popular</SelectItem>
-                <SelectItem value="newest">Newest</SelectItem>
-                <SelectItem value="a-z">A-Z</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <TabsContent value="all" className="mt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 16 }).map((_, i) => (
-              <div key={i} className="group relative">
-                <Link href={`/editor/template/${i}`}>
+        <TabsContent value={activeCategory} className="mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredTemplates.map((template) => (
+              <div key={template.id} className="group relative">
+                <Link href={`/editor/template/${template.id}`}>
                   <div className="aspect-[3/4] rounded-lg border bg-muted overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      Template {i + 1}
+                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground p-4">
+                      <span className="text-lg font-medium mb-2">{template.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {template.dimensions.width} x {template.dimensions.height}px
+                      </span>
                     </div>
                   </div>
                 </Link>
                 <div className="mt-2 flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium group-hover:underline">Template {i + 1}</p>
-                    <p className="text-xs text-muted-foreground">Category</p>
+                    <p className="text-sm font-medium group-hover:underline">{template.name}</p>
+                    <p className="text-xs text-muted-foreground">{template.category}</p>
                   </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    {i % 3 === 0 ? <Star className="h-4 w-4 fill-primary" /> : <StarOff className="h-4 w-4" />}
-                    <span className="sr-only">Favorite</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="social" className="mt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="group relative">
-                <Link href={`/editor/template/${i}`}>
-                  <div className="aspect-[3/4] rounded-lg border bg-muted overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      Social {i + 1}
-                    </div>
-                  </div>
-                </Link>
-                <div className="mt-2 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium group-hover:underline">Social Template {i + 1}</p>
-                    <p className="text-xs text-muted-foreground">Social Media</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    {i % 3 === 0 ? <Star className="h-4 w-4 fill-primary" /> : <StarOff className="h-4 w-4" />}
-                    <span className="sr-only">Favorite</span>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="favorites" className="mt-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="group relative">
-                <Link href={`/editor/template/${i}`}>
-                  <div className="aspect-[3/4] rounded-lg border bg-muted overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      Favorite {i + 1}
-                    </div>
-                  </div>
-                </Link>
-                <div className="mt-2 flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium group-hover:underline">Favorite Template {i + 1}</p>
-                    <p className="text-xs text-muted-foreground">Category</p>
-                  </div>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Star className="h-4 w-4 fill-primary" />
-                    <span className="sr-only">Unfavorite</span>
-                  </Button>
                 </div>
               </div>
             ))}
@@ -119,5 +98,5 @@ export default function TemplatesPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

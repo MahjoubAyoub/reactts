@@ -20,7 +20,7 @@ export default function Home() {
       </header>
       <main className="flex-1">
         <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
-          <div className="flex max-w-[980px] flex-col items-center gap-2">
+          <div className="flex max-w-[980px] flex-col items-center gap-2 mx-auto w-full">
             <h1 className="text-center text-3xl font-extrabold leading-tight tracking-tighter md:text-4xl lg:text-5xl">
               Create stunning designs <br className="hidden sm:inline" />
               with Designih

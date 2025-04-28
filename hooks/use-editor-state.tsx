@@ -1,202 +1,153 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback } from "react"
+import { EditorElement } from "@/types/editor"
 
-export function useEditorState(initialElements = []) {
-  // Main elements state
-  const [elements, setElements] = useState(initialElements)
+interface EditorState {
+  elements: EditorElement[]
+  selectedId: string | null
+  setSelectedId: (id: string | null) => void
+  updateElement: (id: string, props: Partial<EditorElement>, addToHistory?: boolean) => void
+  addElement: (elementOrType: EditorElement | string, props?: Partial<EditorElement>) => void
+  undo: () => void
+  redo: () => void
+}
 
-  // History management
-  const [history, setHistory] = useState([initialElements])
+export function useEditorState(initialElements: EditorElement[] = []): EditorState {
+  const [elements, setElements] = useState<EditorElement[]>(initialElements)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [history, setHistory] = useState<EditorElement[][]>([initialElements])
   const [historyIndex, setHistoryIndex] = useState(0)
 
-  // Selection state
-  const [selectedId, setSelectedId] = useState(null)
+  const addToHistory = useCallback((newElements: EditorElement[]) => {
+    setHistory(prev => {
+      const newHistory = prev.slice(0, historyIndex + 1)
+      return [...newHistory, newElements]
+    })
+    setHistoryIndex(prev => prev + 1)
+  }, [historyIndex])
 
-  // Refs for optimization
-  const stageRef = useRef(null)
-  const transformerRef = useRef(null)
-  const imageCache = useRef(new Map())
-
-  // Add to history
-  const addToHistory = useCallback(
-    (newElements) => {
-      setHistory((prev) => {
-        // Remove any future history if we're not at the end
-        const newHistory = prev.slice(0, historyIndex + 1)
-        // Add new state to history
-        return [...newHistory, newElements]
+  const updateElement = useCallback((id: string, props: Partial<EditorElement>, shouldAddToHistory: boolean = false) => {
+    setElements(prev => {
+      const updated = prev.map(el => {
+        if (el.id === id) {
+          return { ...el, ...props }
+        }
+        return el
       })
-      setHistoryIndex((prev) => prev + 1)
-    },
-    [historyIndex],
-  )
 
-  // Undo function
+      if (shouldAddToHistory) {
+        addToHistory(updated)
+      }
+      return updated
+    })
+  }, [addToHistory])
+
+  const addElement = useCallback((elementOrType: EditorElement | string, props: Partial<EditorElement> = {}) => {
+    if (typeof elementOrType === 'string') {
+      const id = `${elementOrType}${Date.now()}`
+      const defaultProps = {
+        x: 100,
+        y: 100,
+        fill: "#4dabf7",
+        draggable: true,
+        visible: true,
+        locked: false,
+        name: props.name || elementOrType.charAt(0).toUpperCase() + elementOrType.slice(1),
+        scaleX: 1,
+        scaleY: 1,
+      }
+
+      let specificProps = {}
+      switch (elementOrType) {
+        case 'rect':
+          specificProps = {
+            width: props.width || 100,
+            height: props.height || 100,
+          }
+          break
+        case 'circle':
+          specificProps = {
+            radius: props.radius || 50,
+          }
+          break
+        case 'ellipse':
+          specificProps = {
+            radiusX: props.radiusX || 50,
+            radiusY: props.radiusY || 30,
+          }
+          break
+        case 'regularPolygon':
+          specificProps = {
+            sides: props.sides || 3,
+            radius: props.radius || 50,
+          }
+          break
+        case 'star':
+          specificProps = {
+            numPoints: props.numPoints || 5,
+            innerRadius: props.innerRadius || 20,
+            outerRadius: props.outerRadius || 50,
+          }
+          break
+        case 'text':
+          specificProps = {
+            text: props.text || 'New Text',
+            fontSize: props.fontSize || 20,
+            fontFamily: props.fontFamily || 'Arial',
+            fontStyle: props.fontStyle || 'normal',
+            align: props.align || 'left',
+          }
+          break
+      }
+
+      const newElement: EditorElement = {
+        id,
+        type: elementOrType,
+        ...defaultProps,
+        ...specificProps,
+        ...props,
+      }
+
+      setElements(prev => {
+        const updated = [...prev, newElement]
+        addToHistory(updated)
+        return updated
+      })
+      setSelectedId(id)
+    } else {
+      setElements(prev => {
+        const updated = [...prev, elementOrType]
+        addToHistory(updated)
+        return updated
+      })
+      setSelectedId(elementOrType.id)
+    }
+  }, [addToHistory])
+
   const undo = useCallback(() => {
     if (historyIndex > 0) {
-      setHistoryIndex((prev) => prev - 1)
+      setHistoryIndex(prev => prev - 1)
       setElements(history[historyIndex - 1])
       setSelectedId(null)
     }
   }, [history, historyIndex])
 
-  // Redo function
   const redo = useCallback(() => {
     if (historyIndex < history.length - 1) {
-      setHistoryIndex((prev) => prev + 1)
+      setHistoryIndex(prev => prev + 1)
       setElements(history[historyIndex + 1])
       setSelectedId(null)
     }
   }, [history, historyIndex])
 
-  // Update element
-  const updateElement = useCallback(
-    (id, newProps, addToHistoryFlag = false) => {
-      setElements((prev) => {
-        const updated = prev.map((el) => (el.id === id ? { ...el, ...newProps } : el))
-
-        if (addToHistoryFlag) {
-          addToHistory(updated)
-        }
-
-        return updated
-      })
-    },
-    [addToHistory],
-  )
-
-  // Add element
-  const addElement = useCallback(
-    (element) => {
-      setElements((prev) => {
-        const updated = [...prev, element]
-        addToHistory(updated)
-        return updated
-      })
-      setSelectedId(element.id)
-    },
-    [addToHistory],
-  )
-
-  // Delete element
-  const deleteElement = useCallback(
-    (id) => {
-      setElements((prev) => {
-        const updated = prev.filter((el) => el.id !== id)
-        addToHistory(updated)
-        return updated
-      })
-
-      if (selectedId === id) {
-        setSelectedId(null)
-      }
-    },
-    [addToHistory, selectedId],
-  )
-
-  // Duplicate element
-  const duplicateElement = useCallback(
-    (id) => {
-      const element = elements.find((el) => el.id === id)
-      if (!element) return
-
-      const newElement = {
-        ...element,
-        id: `${element.type}${Date.now()}`,
-        x: element.x + 20,
-        y: element.y + 20,
-        name: `${element.name || "Element"} (copy)`,
-      }
-
-      setElements((prev) => {
-        const updated = [...prev, newElement]
-        addToHistory(updated)
-        return updated
-      })
-
-      setSelectedId(newElement.id)
-    },
-    [elements, addToHistory],
-  )
-
-  // Move element in layer stack
-  const moveElement = useCallback(
-    (id, direction) => {
-      const index = elements.findIndex((el) => el.id === id)
-      if (index === -1) return
-
-      if (direction === "up" && index < elements.length - 1) {
-        setElements((prev) => {
-          const updated = [...prev]
-          ;[updated[index], updated[index + 1]] = [updated[index + 1], updated[index]]
-          addToHistory(updated)
-          return updated
-        })
-      } else if (direction === "down" && index > 0) {
-        setElements((prev) => {
-          const updated = [...prev]
-          ;[updated[index], updated[index - 1]] = [updated[index - 1], updated[index]]
-          addToHistory(updated)
-          return updated
-        })
-      }
-    },
-    [elements, addToHistory],
-  )
-
-  // Toggle element visibility
-  const toggleVisibility = useCallback(
-    (id, visible) => {
-      updateElement(id, { visible }, true)
-    },
-    [updateElement],
-  )
-
-  // Toggle element lock
-  const toggleLock = useCallback(
-    (id, locked) => {
-      updateElement(id, { locked, draggable: !locked }, true)
-    },
-    [updateElement],
-  )
-
-  // Rename element
-  const renameElement = useCallback(
-    (id, name) => {
-      updateElement(id, { name }, true)
-    },
-    [updateElement],
-  )
-
-  // Get cached image
-  const getCachedImage = useCallback((src) => {
-    if (!imageCache.current.has(src)) {
-      const img = new window.Image()
-      img.src = src
-      imageCache.current.set(src, img)
-    }
-    return imageCache.current.get(src)
-  }, [])
-
   return {
     elements,
     selectedId,
     setSelectedId,
-    stageRef,
-    transformerRef,
-    history,
-    historyIndex,
-    undo,
-    redo,
     updateElement,
     addElement,
-    deleteElement,
-    duplicateElement,
-    moveElement,
-    toggleVisibility,
-    toggleLock,
-    renameElement,
-    getCachedImage,
+    undo,
+    redo
   }
 }
